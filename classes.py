@@ -46,22 +46,6 @@ class Hand:
                     return _value
         return _value
 
-    def __gt__(self, other):
-        return self.value > other.value
-
-    def __eq__(self, other):
-        return self.value == other.value
-
-
-
-
-
-
-
-
-
-
-
     def __str__(self):
         return reduce(lambda y, z: f"{y}\n{z}", self.cards)
 
@@ -77,3 +61,6 @@ class Hand:
 
     def __gt__(self, other):
         return self.value > other.value
+
+    def __eq__(self, other):
+        return self.value == other.value
