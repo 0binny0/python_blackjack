@@ -1,0 +1,3 @@
+
+class BetError(Exception):
+    pass

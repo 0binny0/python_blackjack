@@ -4,6 +4,8 @@ from unittest.mock import patch, Mock, MagicMock
 
 import classes
 
+import exceptions
+
 class TestBlackjackFaceCard(TestCase):
     '''Verify that Jack, Queen, and King face cards
     are assigned a value of 10. Ace cards are assigned
@@ -133,7 +135,58 @@ class TestBlackjackHandComparisonOperators(TestCase):
     def test_blackjack_hands_equal(self):
         self.assertTrue(self.hand2 == self.hand3)
 
+class TestPlayerBetInitialHandNoChips(TestCase):
+    '''Verify that if a player has yet to be dealt a hand and
+    has chips less than the minimum bet required
+    that they cannot play a round of blackjack'''
 
+    def setUp(self):
+        self.player = classes.Player()
+        self.player.chips = 5
+
+    def test_player_bet_attempt_no_chips(self):
+        with self.assertRaises(exceptions.BetError) as error:
+            self.player.bet()
+            self.assertEqual(
+                error.msg,
+                "Player has no chips to bet with...GAME OVER"
+            )
+
+class TestPlayerInvalidInitialBet(TestCase):
+    '''Verify that a player bet placed below the minimum bet required
+    or greater than their total chip stack is not allowed.'''
+
+    def setUp(self):
+        self.player = classes.Player()
+        self.player.chips = 45
+
+    @patch("classes.print")
+    @patch("classes.input", side_effect=['9', '60', '15'])
+    def test_player_bet(self, mock_bet, mock_msg):
+        bet = self.player.bet()
+        self.assertEqual(mock_bet.call_count, 3)
+        self.assertEqual(bet, 15)
+
+
+class TestPlayerAdditionalBet(TestCase):
+    '''Verify that a player cannot bet a second bet if their
+    initial bet is greater than their current chip stack.'''
+
+    def setUp(self):
+        self.player = classes.Player()
+        self.player.hands = [classes.Hand([
+            classes.Card("Spades", 2), classes.Card("Hearts", 'King')
+        ])]
+        self.player.placed_bet = 40
+        self.player.chips = 25
+
+    def test_player_bet_exceeds_chip_amount(self):
+        with self.assertRaises(exceptions.BetError) as error:
+            self.player.bet()
+            self.assertEqual(
+                error.msg,
+                "Bet placed is greate than chip stack...bet disallowed"
+            )
 
 
 

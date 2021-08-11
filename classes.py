@@ -1,4 +1,7 @@
 
+from exceptions import BetError
+
+import re
 from functools import reduce
 
 class Card:
@@ -64,3 +67,39 @@ class Hand:
 
     def __eq__(self, other):
         return self.value == other.value
+
+
+class Player:
+
+    def __init__(self):
+        self.hands = []
+        self.chips = 50
+        self.placed_bet = 0
+
+    def bet(self):
+        if self.chips < 10 and not self.hands:
+            raise BetError(
+                "Player cannot meet minimum bet requirement...GAME OVER"
+            )
+        elif self.chips >= 10 and not self.hands:
+            while True:
+                placed_bet = input(
+                    "Minimum bet required to play round is 10 chips\n>>> "
+                )
+                matched_bet = re.match(r"^\d{2}(?!\D+)$", placed_bet)
+                if matched_bet:
+                    placed_bet = int(matched_bet.group())
+                    if placed_bet >= 10 and placed_bet <= self.chips:
+                        self.chips -= placed_bet
+                        self.placed_bet = placed_bet
+                        return self.placed_bet
+                print("Invalid bet by player...")
+                continue
+        second_bet = self.chips - self.placed_bet
+        if second_bet < 0:
+            raise BetError(
+                "Bet placed is greater than chip stack...bet not allowed"
+            )
+        self.chips -= self.placed_bet
+        self.placed_bet *= 2
+        return self.placed_bet
