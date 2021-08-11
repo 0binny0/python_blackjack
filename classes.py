@@ -3,6 +3,7 @@ from exceptions import BetError
 
 import re
 from functools import reduce
+from textwrap import dedent
 
 class Card:
 
@@ -24,8 +25,12 @@ class Card:
             return f"{self.__class__.__name__}({self.suit}, {self.face_card})"
         return f"{self.__class__.__name__}({self.suit}, {self.pip})"
 
+    def __eq__(self, other):
+        return self.pip == other.pip
+
 
 class Hand:
+
     def __init__(self, cards):
         self.cards = cards
         self.bust = False
@@ -68,6 +73,9 @@ class Hand:
     def __eq__(self, other):
         return self.value == other.value
 
+    def __len__(self):
+        return len(self.cards)
+
 
 class Player:
 
@@ -103,3 +111,49 @@ class Player:
         self.chips -= self.placed_bet
         self.placed_bet *= 2
         return self.placed_bet
+
+    def check_hand(self, hand):
+        if all(card.pip != 11 for card in hand.cards) and hand.value > 21:
+            return "BUST"
+        while True:
+            print(dedent('''
+                BLACKJACK OPTIONS:
+                    * Hit - Request another card from the dealer
+                    * Stand - Play your hand against the dealer as is
+                    * Split - Split your hand if your cards are of the same pip/face card
+                    * Double Down - Request another card and play your and against the dealer as is
+            '''))
+            while True:
+                player_move = input(
+                    "How would you like to play your hand...\n>>> "
+                )
+                matched_move = re.match(
+                    r"HIT|SPLIT|STAND|DOUBLE DOWN", player_move
+                )
+                if matched_move:
+                    if player_move == "SPLIT":
+                        if len(self.hands) == 1:
+                            if hand.cards[0] == hand.cards[1]:
+                                try:
+                                    self.bet()
+                                    return player_move
+                                except BetError as e:
+                                    print(e)
+                                    break
+                            else:
+                                print("Cards can only be split if they are of the same pip/face card")
+                                break
+                        else:
+                            print("Only your initial hand can be split... move not allowed")
+                            break
+                    elif player_move == "DOUBLE DOWN":
+                        if len(hand) == 2 and not hand.double_down:
+                            try:
+                                self.bet()
+                                hand.double_down = True
+                                return player_move
+                            except BetError as e:
+                                print(e)
+                                break
+                    else:
+                        return player_move
