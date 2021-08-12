@@ -3,6 +3,7 @@ import re
 
 from functools import reduce
 from textwrap import dedent
+from random import shuffle
 
 from exceptions import BetError
 
@@ -168,7 +169,7 @@ class Dealer:
         self.cards = self.shuffle_cards()
 
     def shuffle_cards(self):
-        return [
+        cards = [
             Card(suit, value)
             for _ in range(4)
             for suit in ['Clubs', 'Diamonds', 'Spades', 'Hearts']
@@ -176,6 +177,8 @@ class Dealer:
                 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace'
             ]
         ]
+        shuffle(cards)
+        return cards
 
     def deal(self, player_move):
         if player_move == "HIT" or player_move == "DOUBLE DOWN":
