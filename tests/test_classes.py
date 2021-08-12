@@ -277,5 +277,28 @@ class TestPlayMoveHandBust(TestCase):
         self.assertEqual(move, "BUST")
 
 
+class TestDealerCheckHandLessThan17(TestCase):
+    '''Verify that a dealer deals a card to themself until
+    their hand is greater than 17.'''
+
+    def setUp(self):
+        self.dealer = classes.Dealer()
+        self.patch_dealer1 = patch.object(
+            self.dealer, 'deal', side_effect=[
+                classes.Card("Hearts", 3), classes.Card("Diamonds", "Ace"),
+                classes.Card("Diamonds", 4)
+            ]
+        )
+        self.mock_deal = self.patch_dealer1.start()
+        self.addCleanup(self.patch_dealer1.stop)
+        self.dealer.hand = classes.Hand([
+            classes.Card("Hearts", "Jack"), classes.Card("Hearts", 2)
+        ])
+
+    def test_dealer_check_hand(self):
+        hand = self.dealer.check_hand()
+        self.assertEqual(self.mock_deal.call_count, 3)
+        self.assertEqual(hand.value, 20)
+
 if __name__ == "__main__":
     main()

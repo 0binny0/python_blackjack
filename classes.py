@@ -1,9 +1,11 @@
 
-from exceptions import BetError
-
 import re
+
 from functools import reduce
 from textwrap import dedent
+
+from exceptions import BetError
+
 
 class Card:
 
@@ -157,3 +159,33 @@ class Player:
                                 break
                     else:
                         return player_move
+
+
+class Dealer:
+
+    def __init__(self):
+        self.hand = None
+        self.cards = self.shuffle_cards()
+
+    def shuffle_cards(self):
+        return [
+            Card(suit, value)
+            for _ in range(4)
+            for suit in ['Clubs', 'Diamonds', 'Spades', 'Hearts']
+            for value in [
+                2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace'
+            ]
+        ]
+
+    def deal(self, player_move):
+        if player_move == "HIT" or player_move == "DOUBLE DOWN":
+            dealt_cards = self.cards.pop(0)
+        elif player_move == "SPLIT":
+            dealt_cards = [self.cards.pop(0) for _ in range(2)]
+        return dealt_cards
+
+    def check_hand(self):
+        while self.hand.value < 17:
+            card = self.deal("HIT")
+            self.hand.cards.append(card)
+        return self.hand
