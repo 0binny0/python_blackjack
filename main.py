@@ -6,6 +6,9 @@ from functools import reduce
 from copy import deepcopy
 
 def game(player, dealer):
+    if player.hands:
+        player.hands = []
+        dealer.hand = None
     try:
         bet = player.bet()
     except BetError as e:
@@ -21,10 +24,10 @@ def game(player, dealer):
                 i += 1
             elif player_move == "DOUBLE DOWN":
                 card = dealer.deal(player_move)
-                player.hands[i].append(card)
+                player.hands[i].cards.append(card)
                 if player.hands[i].value > 21:
                     player.hands[i].bust = True
-                    i += 1
+                i += 1
             elif player_move == "SPLIT":
                 player_cards = player.hands.pop().cards
                 dealt_cards = dealer.deal(player_move)
@@ -55,23 +58,48 @@ def game(player, dealer):
                         player.hands.pop(0)
                     i += 1
                 if player.hands:
-                    winner = deepcopy(player)
-                    winner.chips += (bet * len(player.hands))
+                    winner = player
+                    winner.chips += (player.placed_bet * len(player.hands))
                 else:
                     winner = dealer
             collected_game_cards = (
                 [hand.cards for hand in player.hands] + [dealer.hand.cards]
             )
             dealer.cards += collected_game_cards
-            player.hands = []
             player.placed_bet = 0
-            dealer.hand = None
         return winner
 
-def main():
-    player = Player()
-    dealer = Dealer()
-    while True:
-        winner = game()
-        print(winner)
-        break
+# def main():
+#     player = Player()
+#     dealer = Dealer()
+#     while True:
+#         winner = game(player, dealer)
+#         print(f"** Winner: {winner}  **\nWinning hand(s):\n")
+#         if winner is player:
+#             hands = reduce(
+#                 lambda string, hand: string += f"""
+#                 ===============
+#                 {hand}
+#                 ===============
+#                 """, winner.hands, ""
+#             )
+#         else:
+#             hands = f"""
+#                 ===============
+#                 {winner.hand}
+#                 ===============
+#             """
+#         print(hands)
+#         while True:
+#             play_again = input(
+#                 "Would you like to play another round of Blackjack?\n>>> "
+#             ).upper()
+#             if play_again not in ["Y", "N"]:
+#                 print("To continue (or not) press Y(es) or N(o)...")
+#             else:
+#                 if play_again == "N":
+#                     print("Goodbye!")
+
+
+if __name__ == "__main__":
+    main()
