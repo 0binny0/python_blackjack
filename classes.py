@@ -161,6 +161,9 @@ class Player:
                     else:
                         return player_move
 
+    def collect_hand(self, hand):
+        self.hands.append(hand)
+
 
 class Dealer:
 
@@ -180,7 +183,13 @@ class Dealer:
         shuffle(cards)
         return cards
 
-    def deal(self, player_move):
+    def deal(self, player_move=None, initial_hand=False):
+        if initial_hand:
+            dealt_cards = [self.cards.pop(0) for _ in range(4)]
+            dealer_hand = Hand([dealt_cards[1], dealt_cards[3]])
+            player_hand = Hand([dealt_cards[0], dealt_cards[2]])
+            return (player_hand, dealer_hand)
+
         if player_move == "HIT" or player_move == "DOUBLE DOWN":
             dealt_cards = self.cards.pop(0)
         elif player_move == "SPLIT":
