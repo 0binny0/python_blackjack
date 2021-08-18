@@ -5,6 +5,7 @@ from unittest.mock import Mock, MagicMock, patch
 import classes
 import main
 
+
 class TestBlackjackGamePlayerStandWin(TestCase):
     '''Verify that a player is rewarded double the amount of
     chips based on their placed bet if their hand beats

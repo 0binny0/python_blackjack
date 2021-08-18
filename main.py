@@ -1,4 +1,3 @@
-
 from functools import reduce
 from time import sleep
 from sys import exit
@@ -6,8 +5,6 @@ from sys import exit
 from classes import Player, Dealer, Hand
 from exceptions import BetError
 from helpers import cls
-
-
 
 
 def game(player, dealer):
@@ -89,6 +86,7 @@ def game(player, dealer):
     player.placed_bet = 0
     return winner
 
+
 def main():
     cls()
     player = Player()
@@ -112,9 +110,8 @@ def main():
             )
         else:
             hands = f"""
-                ===============
-                {winner.hand}
-                ===============
+                Winning Hand:
+                >>> {winner.hand}
             """
         print(hands)
         while True:
@@ -130,7 +127,6 @@ def main():
                     sleep(1)
                     exit()
                 break
-
 
 if __name__ == "__main__":
     main()

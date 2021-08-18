@@ -3,8 +3,8 @@ from unittest import TestCase, main
 from unittest.mock import patch, Mock, MagicMock
 
 import classes
-
 import exceptions
+
 
 class TestBlackjackFaceCard(TestCase):
     '''Verify that Jack, Queen, and King face cards
@@ -135,6 +135,7 @@ class TestBlackjackHandComparisonOperators(TestCase):
     def test_blackjack_hands_equal(self):
         self.assertTrue(self.hand2 == self.hand3)
 
+
 class TestPlayerBetInitialHandNoChips(TestCase):
     '''Verify that if a player has yet to be dealt a hand and
     has chips less than the minimum bet required
@@ -151,6 +152,7 @@ class TestPlayerBetInitialHandNoChips(TestCase):
                 error.msg,
                 "Player has no chips to bet with...GAME OVER"
             )
+
 
 class TestPlayerInvalidInitialBet(TestCase):
     '''Verify that a player bet placed below the minimum bet required
@@ -292,29 +294,6 @@ class TestPlayMoveHandBust(TestCase):
         move = self.player.check_hand(self.hand, self.dealer.hand)
         self.assertEqual(move, "BUST")
 
-
-# class TestDealerCheckHandLessThan17(TestCase):
-#     '''Verify that a dealer deals a card to themself until
-#     their hand is greater than 17.'''
-#
-#     def setUp(self):
-#         self.dealer = classes.Dealer()
-#         self.patch_dealer1 = patch.object(
-#             self.dealer, 'deal', side_effect=[
-#                 classes.Card("Hearts", 3), classes.Card("Diamonds", "Ace"),
-#                 classes.Card("Diamonds", 4)
-#             ]
-#         )
-#         self.mock_deal = self.patch_dealer1.start()
-#         self.addCleanup(self.patch_dealer1.stop)
-#         self.dealer.hand = classes.Hand([
-#             classes.Card("Hearts", "Jack"), classes.Card("Hearts", 2)
-#         ])
-#
-#     def test_dealer_check_hand(self):
-#         hand = self.dealer.check_hand()
-#         self.assertEqual(self.mock_deal.call_count, 3)
-#         self.assertEqual(hand.value, 20)
 
 if __name__ == "__main__":
     main()

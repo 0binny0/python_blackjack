@@ -1,4 +1,3 @@
-
 import re
 
 from functools import reduce
@@ -6,7 +5,7 @@ from textwrap import dedent
 from random import shuffle
 
 from exceptions import BetError
-from helpers import cls, show_player_stats
+from helpers import cls
 
 
 class Card:
@@ -67,8 +66,8 @@ class Hand:
         if _value > 21:
             total_aces = filter(
                 lambda i: (
-                    hasattr(self.cards[i], 'face_card')
-                    and self.cards[i].face_card == "Ace"
+                    (hasattr(self.cards[i], 'face_card') and
+                    self.cards[i].face_card == "Ace")
                 ), range(len(self.cards)))
             for ace_index in total_aces:
                 self.cards[ace_index].pip = 1
