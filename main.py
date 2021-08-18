@@ -1,25 +1,30 @@
 
-
-from classes import Player, Dealer
-from exceptions import BetError
 from functools import reduce
-from copy import deepcopy
+from time import sleep
+from sys import exit
+
+from classes import Player, Dealer, Hand
+from exceptions import BetError
+from helpers import cls
+
+
+
 
 def game(player, dealer):
     if player.hands:
         player.hands = []
-        dealer.hand = None
+    dealer.hand = None
     try:
         bet = player.bet()
     except BetError as e:
-        print(e)
+        raise
     else:
         player_hand, dealer_hand = dealer.deal(initial_hand=True)
         player.collect_hand(player_hand)
         dealer.hand = dealer_hand
         i = 0
         while i < len(player.hands):
-            player_move = player.check_hand(player.hands[i])
+            player_move = player.check_hand(player.hands[i], dealer.hand)
             if player_move == "STAND":
                 i += 1
             elif player_move == "DOUBLE DOWN":
@@ -31,13 +36,13 @@ def game(player, dealer):
             elif player_move == "SPLIT":
                 player_cards = player.hands.pop().cards
                 dealt_cards = dealer.deal(player_move)
-                for i in range(2):
-                    player.collect_hand(Hand([
-                        player_cards[i], dealt_cards[i]
-                    ]))
+                for x in range(2):
+                    hand = Hand([player_cards[x], dealt_cards[x]])
+                    hand.split = True
+                    player.collect_hand(hand)
             elif player_move == "HIT":
                 card = dealer.deal(player_move)
-                player.hands[0].append(card)
+                player.hands[i].cards.append(card)
             else:
                 player.hands[i].bust = True
                 i += 1
@@ -47,58 +52,84 @@ def game(player, dealer):
         if not final_player_hands:
             winner = dealer
         else:
-            dealer_hand = dealer.check_hand()
-            if dealer_hand.value > 21:
-                player.chips += bet * len(final_player_hands)
-            else:
-                i = 0
-                while i < len(final_player_hands):
-                    player_hand = final_player_hands[i]
-                    if player_hand < dealer_hand:
-                        player.hands.pop(0)
-                    i += 1
-                if player.hands:
-                    winner = player
-                    winner.chips += (player.placed_bet * len(player.hands))
+            low_dealer_hand = any(
+                dealer.hand < hand for hand in final_player_hands)
+            if low_dealer_hand:
+                if dealer.hand.value < 17:
+                    while dealer.hand.value < 17:
+                            dealer_hand = dealer.check_hand()
+                            if dealer_hand.value > 21:
+                                for hand in player.hands:
+                                    hand.win = True
+                                winner = player
+                                if player_move in ['DOUBLE DOWN', "SPLIT"]:
+                                    winner.chips += (2 * (bet * 2))
+                                else:
+                                    winner.chips += (2 * bet)
+                                return winner
+            i = 0
+            while i < len(final_player_hands):
+                player_hand = final_player_hands[i]
+                if player_hand >= dealer_hand:
+                    player.hands[i].win = True
+                i += 1
+            won_hands = [hand for hand in player.hands if hand.win]
+            if won_hands:
+                winner = player
+                if player_move in ['DOUBLE DOWN', "SPLIT"]:
+                    winner.chips += (2 * (bet * 2))
                 else:
-                    winner = dealer
-            collected_game_cards = (
-                [hand.cards for hand in player.hands] + [dealer.hand.cards]
-            )
-            dealer.cards += collected_game_cards
-            player.placed_bet = 0
-        return winner
+                    winner.chips += (2 * bet)
+            else:
+                winner = dealer
+    collected_game_cards = (
+        [hand.cards for hand in player.hands] + [dealer.hand.cards]
+    )
+    dealer.cards += collected_game_cards
+    player.placed_bet = 0
+    return winner
 
-# def main():
-#     player = Player()
-#     dealer = Dealer()
-#     while True:
-#         winner = game(player, dealer)
-#         print(f"** Winner: {winner}  **\nWinning hand(s):\n")
-#         if winner is player:
-#             hands = reduce(
-#                 lambda string, hand: string += f"""
-#                 ===============
-#                 {hand}
-#                 ===============
-#                 """, winner.hands, ""
-#             )
-#         else:
-#             hands = f"""
-#                 ===============
-#                 {winner.hand}
-#                 ===============
-#             """
-#         print(hands)
-#         while True:
-#             play_again = input(
-#                 "Would you like to play another round of Blackjack?\n>>> "
-#             ).upper()
-#             if play_again not in ["Y", "N"]:
-#                 print("To continue (or not) press Y(es) or N(o)...")
-#             else:
-#                 if play_again == "N":
-#                     print("Goodbye!")
+def main():
+    cls()
+    player = Player()
+    dealer = Dealer()
+    print("""Welcome to the blackjack table...\n""")
+    while True:
+        try:
+            winner = game(player, dealer)
+        except BetError as e:
+            print(f"\nPlayer has no remaining chips:\n{e}")
+            exit()
+            cls()
+        cls()
+        print(f"** Winner: {winner} **\nPlayed hand(s):")
+        if winner is player:
+            hands = reduce(
+                lambda string, hand: string + f"""
+                {"Winning Hand:" if hand.win else "Losing Hand:"} {hand.value}
+                >>> {hand}
+                """ + "\n", winner.hands, ""
+            )
+        else:
+            hands = f"""
+                ===============
+                {winner.hand}
+                ===============
+            """
+        print(hands)
+        while True:
+            play_again = input(
+                "Would you like to play another round of Blackjack?\n>>> "
+            ).upper()
+            if play_again not in ["Y", "N"]:
+                print("To continue (or not) press Y(es) or N(o)...")
+                sleep(1)
+            else:
+                if play_again == "N":
+                    print("Goodbye!")
+                    sleep(1)
+                    exit()
+                break
 
 
 if __name__ == "__main__":

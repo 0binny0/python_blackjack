@@ -6,6 +6,7 @@ from textwrap import dedent
 from random import shuffle
 
 from exceptions import BetError
+from helpers import cls, show_player_stats
 
 
 class Card:
@@ -29,13 +30,32 @@ class Card:
         return f"{self.__class__.__name__}({self.suit}, {self.pip})"
 
     def __eq__(self, other):
-        return self.pip == other.pip
+        case1 = hasattr(self, 'face_card') and not hasattr(other, 'face_card')
+        case2 = not hasattr(self, 'face_card') and hasattr(other, 'face_card')
+        if case1 or case2:
+            raise Exception(
+                "Cards can only be split if they are of the same pip/face card"
+            )
+        face_cards = all(hasattr(card, 'face_card') for card in [self, other])
+        if not face_cards:
+            if self.pip != other.pip:
+                raise Exception(
+                    "Split Failed: Cards are not of the same pip value"
+                )
+            return self.pip == other.pip
+        elif face_cards:
+            if self.face_card != other.face_card:
+                raise Exception(
+                    "Split Failed: Cards are not of the same face card"
+                )
+            return self.face_card == other.face_card
 
 
 class Hand:
 
     def __init__(self, cards):
         self.cards = cards
+        self.win = False
         self.bust = False
         self.soft = False
         self.split = False
@@ -58,7 +78,8 @@ class Hand:
         return _value
 
     def __str__(self):
-        return reduce(lambda y, z: f"{y}\n{z}", self.cards)
+        return reduce(lambda x, y: f"{x},  {y}", self.cards)
+        # return reduce(lambda y, z: f"{y}\n{z}", self.cards)
 
     def __repr__(self):
         cls = f"{self.__class__.__name__}(["
@@ -73,6 +94,9 @@ class Hand:
     def __gt__(self, other):
         return self.value > other.value
 
+    def __ge__(self, other):
+        return self.value >= other.value
+
     def __eq__(self, other):
         return self.value == other.value
 
@@ -86,6 +110,9 @@ class Player:
         self.hands = []
         self.chips = 50
         self.placed_bet = 0
+
+    def __str__(self):
+        return "Player"
 
     def bet(self):
         if self.chips < 10 and not self.hands:
@@ -104,62 +131,79 @@ class Player:
                         self.chips -= placed_bet
                         self.placed_bet = placed_bet
                         return self.placed_bet
-                print("Invalid bet by player...")
+                print("\nInvalid bet by player...")
                 continue
         second_bet = self.chips - self.placed_bet
         if second_bet < 0:
             raise BetError(
-                "Bet placed is greater than chip stack...bet not allowed"
+                "\nBet placed is greater than chip stack...bet not allowed"
             )
         self.chips -= self.placed_bet
         self.placed_bet *= 2
         return self.placed_bet
 
-    def check_hand(self, hand):
-        if all(card.pip != 11 for card in hand.cards) and hand.value > 21:
+    def check_hand(self, player_hand, dealer_hand):
+        cls()
+        if player_hand.value > 21 and all(card.pip != 11 for card in player_hand.cards):
             return "BUST"
         while True:
-            print(dedent('''
+            print(dedent(f'''
                 BLACKJACK OPTIONS:
-                    * Hit - Request another card from the dealer
-                    * Stand - Play your hand against the dealer as is
-                    * Split - Split your hand if your cards are of the same pip/face card
-                    * Double Down - Request another card and play your and against the dealer as is
+                    * HIT - Request another card from the dealer
+                    * STAND - Play your hand against the dealer as is
+                    * SPLIT - Split your hand if your cards are of the same pip/face card
+                    * DOUBLE DOWN - Request another card and play your and against the dealer as is
+
+                Player info: Bet: {self.placed_bet} --- Chips: {self.chips}
+                +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                PLAYER: {player_hand} : Hand Value ({player_hand.value})
+
+                DEALER: {dealer_hand} : Hand Value ({dealer_hand.value})
             '''))
             while True:
                 player_move = input(
-                    "How would you like to play your hand...\n>>> "
-                )
+                    "\nHow would you like to play your hand...\n>>> "
+                ).upper()
                 matched_move = re.match(
                     r"HIT|SPLIT|STAND|DOUBLE DOWN", player_move
                 )
                 if matched_move:
                     if player_move == "SPLIT":
                         if len(self.hands) == 1:
-                            if hand.cards[0] == hand.cards[1]:
+                            try:
+                                player_hand.cards[0] == player_hand.cards[1]
                                 try:
                                     self.bet()
                                     return player_move
                                 except BetError as e:
                                     print(e)
+                                    cls()
                                     break
-                            else:
-                                print("Cards can only be split if they are of the same pip/face card")
+                            except Exception as e:
+                                print(f"\n{e}")
+                                cls()
                                 break
                         else:
                             print("Only your initial hand can be split... move not allowed")
+                            cls()
                             break
                     elif player_move == "DOUBLE DOWN":
-                        if len(hand) == 2 and not hand.double_down:
+                        if len(player_hand) < 3 and not player_hand.double_down:
                             try:
                                 self.bet()
-                                hand.double_down = True
+                                player_hand.double_down = True
                                 return player_move
                             except BetError as e:
                                 print(e)
+                                cls()
                                 break
+                        print("\nCannot double down on this hand...")
+                        cls()
+                        break
                     else:
                         return player_move
+                cls()
+                break
 
     def collect_hand(self, hand):
         self.hands.append(hand)
@@ -170,6 +214,9 @@ class Dealer:
     def __init__(self):
         self.hand = None
         self.cards = self.shuffle_cards()
+
+    def __str__(self):
+        return "Dealer"
 
     def shuffle_cards(self):
         cards = [
@@ -197,7 +244,6 @@ class Dealer:
         return dealt_cards
 
     def check_hand(self):
-        while self.hand.value < 17:
-            card = self.deal("HIT")
-            self.hand.cards.append(card)
+        card = self.deal(player_move="HIT")
+        self.hand.cards.append(card)
         return self.hand

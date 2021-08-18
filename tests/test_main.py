@@ -12,6 +12,7 @@ class TestBlackjackGamePlayerStandWin(TestCase):
 
     def setUp(self):
         self.player = classes.Player()
+        self.player.chips = 30
         self.player.placed_bet = 20
         self.dealer = classes.Dealer()
         hands = [classes.Hand([
@@ -140,4 +141,4 @@ class TestBlackjackGamePlayerDoubleDownWin(TestCase):
         self.assertIsInstance(winner, classes.Player)
         self.assertTrue(winner is self.player)
         self.assertEqual(winner.hands[0].value, 20)
-        self.assertEqual(self.player.chips, 70)
+        self.assertEqual(self.player.chips, 110)
