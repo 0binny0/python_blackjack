@@ -109,6 +109,7 @@ class Player:
         self.hands = []
         self.chips = 50
         self.placed_bet = 0
+        self.winner = False
 
     def __str__(self):
         return "Player"
@@ -151,7 +152,7 @@ class Player:
                     * HIT - Request another card from the dealer
                     * STAND - Play your hand against the dealer as is
                     * SPLIT - Split your hand if your cards are of the same pip/face card
-                    * DOUBLE DOWN - Request another card and play your and against the dealer as is
+                    * DOUBLE DOWN - Request another card and play your hand against the dealer as is
 
                 Player info: Bet: {self.placed_bet} --- Chips: {self.chips}
                 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -213,6 +214,7 @@ class Dealer:
     def __init__(self):
         self.hand = None
         self.cards = self.shuffle_cards()
+        self.winner=False
 
     def __str__(self):
         return "Dealer"

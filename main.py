@@ -8,9 +8,6 @@ from helpers import cls
 
 
 def game(player, dealer):
-    if player.hands:
-        player.hands = []
-    dealer.hand = None
     try:
         bet = player.bet()
     except BetError as e:
@@ -47,7 +44,8 @@ def game(player, dealer):
             lambda hand: not hand.bust, player.hands
         ))
         if not final_player_hands:
-            winner = dealer
+            dealer.winner = True
+            # winner = dealer
         else:
             low_dealer_hand = any(
                 dealer.hand < hand for hand in final_player_hands)
@@ -58,12 +56,14 @@ def game(player, dealer):
                             if dealer_hand.value > 21:
                                 for hand in player.hands:
                                     hand.win = True
-                                winner = player
+                                player.winner = True
+                                # winner = player
                                 if player_move in ['DOUBLE DOWN', "SPLIT"]:
-                                    winner.chips += (2 * (bet * 2))
+                                    player.chips += (2 * (bet * 2))
                                 else:
-                                    winner.chips += (2 * bet)
-                                return winner
+                                    player.chips += (2 * bet)
+                                return player, dealer
+                                # return winner
             i = 0
             while i < len(final_player_hands):
                 player_hand = final_player_hands[i]
@@ -72,19 +72,22 @@ def game(player, dealer):
                 i += 1
             won_hands = [hand for hand in player.hands if hand.win]
             if won_hands:
-                winner = player
+                player.winner = True
+                # winner = player
                 if player_move in ['DOUBLE DOWN', "SPLIT"]:
-                    winner.chips += (2 * (bet * 2))
+                    player.chips += (2 * (bet * 2))
                 else:
-                    winner.chips += (2 * bet)
+                    player.chips += (2 * bet)
             else:
-                winner = dealer
+                dealer.winner = True
+                # winner = dealer
     collected_game_cards = (
         [hand.cards for hand in player.hands] + [dealer.hand.cards]
     )
     dealer.cards += collected_game_cards
     player.placed_bet = 0
-    return winner
+    # import pdb; pdb.set_trace()
+    return player, dealer
 
 
 def main():
@@ -94,25 +97,41 @@ def main():
     print("""Welcome to the blackjack table...\n""")
     while True:
         try:
-            winner = game(player, dealer)
+            player, dealer = game(player, dealer)
         except BetError as e:
             print(f"\nPlayer has no remaining chips:\n{e}")
             exit()
             cls()
         cls()
-        print(f"** Winner: {winner} **\nPlayed hand(s):")
-        if winner is player:
+        winner = [
+            game_player for game_player in [player, dealer]
+            if game_player.winner
+        ][0]
+        if player.winner:
+            print(f"** Winner: {player} **\nPlayed hand(s):")
             hands = reduce(
                 lambda string, hand: string + f"""
-                {"Winning Hand:" if hand.win else "Losing Hand:"} {hand.value}
+                {"Player Winning Hand:" if hand.win else "Player Losing Hand:"} {hand.value}
                 >>> {hand}
-                """ + "\n", winner.hands, ""
+                """ + "\n", player.hands, ""
             )
-        else:
-            hands = f"""
-                Winning Hand:
-                >>> {winner.hand}
+            hands += f"""
+                Dealer Hand:
+                >>> {dealer.hand}
             """
+        else:
+            print(f"** Winner: {dealer} **\nPlayed hand(s):")
+            hands = f"""
+                Winning Dealer Hand:
+                >>> {dealer.hand}
+
+            """
+            hands += "\tLosing Player Hand(s)"
+            hands += reduce(
+                lambda string, hand: string + f"""
+                >>> {hand}
+                """ + "\n", player.hands, ""
+            )
         print(hands)
         while True:
             play_again = input(
@@ -126,6 +145,10 @@ def main():
                     print("Goodbye!")
                     sleep(1)
                     exit()
+                player.winner = False
+                dealer.winner = False
+                player.hands = []
+                dealer.hand = None
                 break
 
 if __name__ == "__main__":
