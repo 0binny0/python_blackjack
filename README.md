@@ -12,4 +12,4 @@
 ### Todos
 * `python main.py`
 
-![Blackjack Demo](https://github.com/BenLHedgepeth/python_blackjack/blob/main/blackjack_gif.lnk)
+![Blackjack Demo](https://github.com/BenLHedgepeth/python_blackjack/blob/main/blackjack_v2.gif)
